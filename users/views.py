@@ -10,7 +10,7 @@ import re
 import zlib
 import mimetypes
 
-import google.generativeai as genai
+from google import genai
 from django.conf import settings as django_settings
 
 # ================= BASIC VIEWS ================= #
@@ -61,12 +61,12 @@ def UserLogout(request):
 
 # ================= GEMINI CONFIG ================= #
 
-def _configure_genai():
-    """Configure genai with the API key from Django settings (always fresh)."""
+def _get_genai_client():
+    """Return a google.genai Client configured with the API key from Django settings."""
     api_key = django_settings.GOOGLE_API_KEY
     if not api_key:
         raise ValueError("GOOGLE_API_KEY is not set in .env file")
-    genai.configure(api_key=api_key)
+    return genai.Client(api_key=api_key)
 
 
 # ================= PLANTUML ENCODING ================= #
@@ -125,8 +125,7 @@ def read_uploaded_file_safely(file_path):
 
 def generate_diagram_from_text(prompt):
     try:
-        _configure_genai()
-        model = genai.GenerativeModel("models/gemini-2.0-flash")
+        client = _get_genai_client()
         system_prompt = (
             "You are a PlantUML expert.\n"
             "Convert the following input into a UML diagram.\n"
@@ -135,7 +134,10 @@ def generate_diagram_from_text(prompt):
             "Do not explain anything.\n\n"
             f"{prompt}"
         )
-        response = model.generate_content(system_prompt)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=system_prompt,
+        )
         text = response.text.strip()
         match = re.search(r"@startuml[\s\S]*?@enduml", text)
         if not match:
@@ -149,9 +151,8 @@ def generate_diagram_from_text(prompt):
 
 def generate_diagram_from_image(image_path):
     try:
-        _configure_genai()
-        model = genai.GenerativeModel("models/gemini-2.0-flash")
-        image_file = genai.upload_file(image_path)
+        client = _get_genai_client()
+        image_file = client.files.upload(file=image_path)
 
         prompt = (
             "Analyze the diagram/image and generate equivalent PlantUML code.\n"
@@ -159,7 +160,10 @@ def generate_diagram_from_image(image_path):
             "Start with @startuml and end with @enduml.\n"
             "No explanation."
         )
-        response = model.generate_content([prompt, image_file])
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[prompt, image_file],
+        )
         text = response.text.strip()
         match = re.search(r"@startuml[\s\S]*?@enduml", text)
         if not match:
