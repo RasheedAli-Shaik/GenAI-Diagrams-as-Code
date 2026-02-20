@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Generative AI Diagrams{% endblock %}
+
+{% block content %}
+<div class="hero" style="padding: 4rem 0; text-align: left;">
+    <h1 style="margin-bottom: 0.5rem;">Welcome back, <span style="color: var(--primary);">{{ request.session.loggeduser }}</span></h1>
+    <p style="margin-bottom: 3rem;">Ready to visualize your next big idea?</p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+        
+        <!-- Primary Action Card -->
+        <div class="glass-panel" style="padding: 2.5rem; border-color: var(--primary); background: linear-gradient(135deg, rgba(92, 98, 236, 0.1) 0%, rgba(19, 22, 38, 0.6) 100%); transition: transform 0.3s ease;">
+            <div style="margin-bottom: 1.5rem; width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px var(--primary-glow);">
+                <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 1.5rem; color: #fff;"></i>
+            </div>
+            <h3>New Diagram</h3>
+            <p style="margin-bottom: 2rem;">Transform code or descriptions into professional architecture diagrams instantly.</p>
+            <a href="{% url 'generate_docs' %}" class="btn btn-primary">Start Generating <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+        </div>
+
+        <!-- Info Card -->
+        <div class="glass-panel" style="padding: 2.5rem;">
+            <div style="margin-bottom: 1.5rem; width: 60px; height: 60px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-book-open" style="font-size: 1.5rem; color: var(--text-muted);"></i> 
+            </div>
+            <h3>Documentation</h3>
+            <p>Learn how to get the best results by refining your prompts and understanding PlantUML syntax.</p>
+            <a href="#" class="btn btn-secondary">Read Guide</a>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

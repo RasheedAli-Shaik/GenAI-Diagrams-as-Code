@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generate - Generative AI Diagrams{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 2rem;">
+    
+    <div style="text-align: center; margin-bottom: 1rem;">
+        <h2><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent); margin-right: 10px;"></i>Generate Diagram</h2>
+        <p>Describe your architecture or upload a code file</p>
+    </div>
+
+    <div class="generate-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+        
+        <!-- Input Section -->
+        <div class="glass-panel" style="padding: 2rem;">
+            <form method="post" enctype="multipart/form-data" id="generateForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="query" class="form-label">Description / Code</label>
+                    <textarea name="query" id="query" class="form-control" style="font-family: var(--font-mono); min-height: 200px;" placeholder="e.g. Create a sequence diagram for a user login process including User, Frontend, Backend, and Database.">{{ request.POST.query }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Or Upload File</label>
+                    <div class="file-upload-zone" id="dropZone">
+                        <input type="file" name="code_file" id="codeFile">
+                        <div id="fileLabelContent">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+                            <p style="margin: 0; font-size: 0.9rem;">Click or Drag & Drop</p>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">.txt, .py, .java, .js, .png</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="submitBtn">
+                    <span id="btnText">Generate Diagram</span>
+                    <i class="fa-solid fa-bolt" style="margin-left: 8px;"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Output Section -->
+        <div class="glass-panel" style="padding: 2rem; min-height: 500px; display: flex; flex-direction: column;">
+            
+            {% if generated_code %}
+                <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;">Result</h3>
+                    <div style="display: flex; gap: 0.5rem;">
+                         <button class="btn btn-secondary" onclick="copyCode()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                            <i class="fa-regular fa-copy"></i> Copy Code
+                         </button>
+                    </div>
+                </div>
+
+                <!-- Tabs (Visual toggle) -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                    <div class="tab-active" style="padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent); color: #fff; font-weight: 600; cursor: pointer;">Visual</div>
+                    <!-- <div class="tab" style="padding-bottom: 0.5rem; color: var(--text-muted); cursor: pointer;">Code</div> --> <!-- Could implement tabs later with JS -->
+                </div>
+
+                {% if diagram_url %}
+                    <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: var(--radius-sm); text-align: center; margin-bottom: 1.5rem; overflow: auto;">
+                        <img src="{{ diagram_url }}" alt="Generated Diagram" style="max-width: 100%; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    </div>
+                {% endif %}
+
+                <label class="form-label">PlantUML Code</label>
+                <div style="position: relative;">
+                    <pre style="max-height: 300px; overflow-y: auto;"><code id="plantuml-code">{{ generated_code }}</code></pre>
+                </div>
+
+            {% elif ai_response %}
+                 <div class="alert alert-error">
+                    <i class="fa-solid fa-triangle-exclamation" style="margin-right: 10px;"></i>
+                    {{ ai_response }}
+                 </div>
+            {% else %}
+                <!-- Empty State -->
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; opacity: 0.5;">
+                    <i class="fa-solid fa-diagram-project" style="font-size: 4rem; margin-bottom: 1.5rem; color: var(--primary);"></i>
+                    <h3>Ready to Create</h3>
+                    <p>Your generated diagram and code will appear here.</p>
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+
+<style>
+    @media (max-width: 900px) {
+        .generate-layout {
+             grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+
+<script>
+    // File Upload Interaction
+    const fileInput = document.getElementById('codeFile');
+    const labelContent = document.getElementById('fileLabelContent');
+    const dropZone = document.getElementById('dropZone');
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            labelContent.innerHTML = '<i class="fa-solid fa-file-code" style="font-size: 2rem; color: var(--success); margin-bottom: 0.5rem;"></i>' +
+                                     '<p style="margin: 0; font-weight: 600;">' + this.files[0].name + '</p>' + 
+                                     '<p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Ready to upload</p>';
+            dropZone.style.borderColor = 'var(--success)';
+            dropZone.style.background = 'rgba(0, 255, 157, 0.05)';
+        }
+    });
+
+    // Loading State
+    const form = document.getElementById('generateForm');
+    const btn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    
+    form.addEventListener('submit', function() {
+        btn.disabled = true;
+        btnText.innerText = 'Processing...';
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+    });
+
+    // Copy Code
+    function copyCode() {
+        const code = document.getElementById('plantuml-code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            alert('Code copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+</script>
+{% endblock %}

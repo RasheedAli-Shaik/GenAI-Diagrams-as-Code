@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Generative AI Diagrams{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <header>
+        <nav class="navbar">
+            <a href="{% url 'index' %}" class="brand-logo">
+                <i class="fa-solid fa-microchip"></i>
+                <span>GenAI<span style="color: var(--accent);">Diagrams</span></span>
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="{% url 'index' %}" class="nav-link">Home</a></li>
+                
+                {% if request.session.loginid %}
+                    {% if request.session.role == 'user' %}
+                        <li><a href="{% url 'UserHome' %}" class="nav-link">Dashboard</a></li>
+                        <li><a href="{% url 'generate_docs' %}" class="nav-link">Generate</a></li>
+                        <li><a href="{% url 'UserLogout' %}" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Logout</a></li>
+                    {% elif request.session.role == 'admin' %}
+                         <li><a href="{% url 'AdminHome' %}" class="nav-link">Admin Panel</a></li>
+                         <li><a href="{% url 'RegisterUsersView' %}" class="nav-link">Users</a></li>
+                         <li><a href="{% url 'AdminLogout' %}" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Logout</a></li>
+                    {% endif %}
+                {% else %}
+                    <li><a href="{% url 'UserLogin' %}" class="nav-link">Login</a></li>
+                    <li><a href="{% url 'UserRegister' %}" class="btn btn-primary">Get Started</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        {% if messages %}
+            <div class="messages-container" style="margin-bottom: 2rem;">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}">
+                        <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-check-circle{% endif %}" style="margin-right: 10px;"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; {% now "Y" %} Generative AI Diagrams. Engineered for the Future.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                // Determine active link logic simply
+                // If href is strictly equal to pathname
+                if(link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

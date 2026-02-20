@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - Generative AI Diagrams{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="glass-panel" style="width: 100%; max-width: 450px; padding: 3rem;">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <i class="fa-solid fa-layer-group" style="font-size: 3rem; color: var(--accent); margin-bottom: 1rem;"></i>
+            <h2>System Access</h2>
+            <p>Enter your credentials to continue</p>
+        </div>
+        
+        <form method="POST" action="{% url 'UserLoginCheck' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="loginid" class="form-label">Username</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-user" style="position: absolute; left: 1rem; top: 1rem; color: var(--text-muted);"></i>
+                    <input type="text" name="loginid" class="form-control" style="padding-left: 3rem;" required placeholder="Enter username">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-lock" style="position: absolute; left: 1rem; top: 1rem; color: var(--text-muted);"></i>
+                    <input type="password" name="password" class="form-control" style="padding-left: 3rem;" required placeholder="Enter password">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                <i class="fa-solid fa-right-to-bracket" style="margin-right: 10px;"></i> Initialize Session
+            </button>
+        </form>
+        
+        <div style="margin-top: 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+            <p style="font-size: 0.9rem;">New to the system? <a href="{% url 'UserRegister' %}" style="color: var(--accent); font-weight: 600;">Create Identity</a></p>
+             <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="{% url 'AdminLogin' %}" style="color: var(--text-muted);">Admin Access</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
